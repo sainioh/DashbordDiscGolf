@@ -10,7 +10,6 @@ class Database():
     def query_to_df(self, q):
         self.c.execute(q)
         temp_df = pd.read_sql_query(q, self.connection)
-        # TEST HERE IF GOOD QUERY
         return temp_df
 
     def __enter__(self):
