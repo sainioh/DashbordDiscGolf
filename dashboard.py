@@ -12,6 +12,19 @@ from itertools import cycle
 
 
 
+def data_preprocessing(df, df_stats):
+    df["holeID"] = df["holeID"].astype(str)
+    df_stats["holeID"] = df_stats["holeID"].astype(str)
+    holes = list(df.holeID.unique())
+
+    return holes
+
+
+
+def data_integrity_check():
+    pass
+
+
 def plot_avg_scores(df):
     '''
     Function to plot average scores for each hole
@@ -37,8 +50,16 @@ def plot_avg_scores(df):
     return fig
 
 
+
 def plot_player_avgs(df):
-    palette = cycle(px.colors.qualitative.Plotly)
+    '''
+    Function to plot average score for each hole for each player
+
+    :param df:
+    :return: figure
+    '''
+
+    palette = cycle(px.colors.qualitative.Plotly) # for plot aesthetics
 
 
 
@@ -98,24 +119,29 @@ def plot_player_avgs(df):
     return fig_3
 
 
+
 def plot_team_results(df2):
+    '''
+    Function to plot each players result progression
+    :param df2:
+    :return: figure
+    '''
 
     df2["Date"] = pd.to_datetime(df2["Date"])
     df2 = df2.sort_values("Date")
 
     fig4 = go.Figure()
     fig4.add_trace(go.Scatter(x=df2[df2["playerID"] == 1]["Date"], y=list(df2[df2["playerID"] == 1]["result"]),
-                             mode='lines+markers',
-                             name='Hemmo'))
+                             mode='lines+markers', name='Hemmo', line_shape='spline'))
+
     fig4.add_trace(go.Scatter(x=df2[df2["playerID"] == 2]["Date"], y=list(df2[df2["playerID"] == 2]["result"]),
-                             mode='lines+markers',
-                             name='Sami'))
+                             mode='lines+markers', name='Sami', line_shape='spline'))
+
     fig4.add_trace(go.Scatter(x=df2[df2["playerID"] == 3]["Date"], y=list(df2[df2["playerID"] == 3]["result"]),
-                             mode='lines+markers',
-                             name='Daniel'))
+                             mode='lines+markers', name='Daniel', line_shape='spline'))
+
     fig4.add_trace(go.Scatter(x=df2[df2["playerID"] == 4]["Date"], y=list(df2[df2["playerID"] == 4]["result"]),
-                             mode='lines+markers',
-                             name='Joonas'))
+                             mode='lines+markers', name='Joonas', line_shape='spline'))
 
     fig4.update_layout(
         title='Scoring progression for each player',
@@ -144,8 +170,7 @@ def plot_team_results(df2):
 
 
 
-
-
+# Accessing data. class Database connects to database and allows to query data from ready made views in sqlite3 database
 with Database("discgolf.db") as db:
     try:
         df = db.query_to_df("SELECT * FROM averages")
@@ -155,20 +180,18 @@ with Database("discgolf.db") as db:
 
     except:
         print("Failed to load data to dataframe")
-
-
-
-df["holeID"] = df["holeID"].astype(str)
-df_stats["holeID"] = df_stats["holeID"].astype(str)
-holes = list(df.holeID.unique())
+        raise
 
 
 
 
+holes = data_preprocessing(df, df_stats)
+
+# initializing the Dash app
 app = dash.Dash(__name__)
 
 
-
+# Dynamic changing of charts
 @app.callback(
     Output("putt_chart", "children"),
     [Input("dropdown", "value")])
@@ -180,6 +203,8 @@ def update_avg_putts_chart(holes):
     return '{}'.format(df[mask]['AVG(score.putts)'].values[0])
 
 
+
+# Dynamic changing to offthetee-chart
 @app.callback(
     Output("teeshot_chart", "figure"),
     [Input("dropdown", "value")])
@@ -198,7 +223,9 @@ def update_offthetee_chart(h):
 
 
 
+# Layout for the dash application
 app.layout = html.Div([
+    html.Title("""Disc Golf Statistics Dashboard"""),
     html.Div([
         html.H1("""Hole Scoring Averages""",
                     style={'margin-right': '2em', 'textAlign': 'center'})
@@ -248,23 +275,21 @@ app.layout = html.Div([
     html.Br(),
     html.Br(),
     html.Div([
-        html.H1("""Player comparisons"""),
+        html.H1("""Group Statistics for Puolarmaari"""),
+        html.Br(),
+        html.Br(),
         dcc.Graph(id="team_avgs", figure=plot_player_avgs(df_team_avgs))
-
-
     ]),
     html.Br(),
     html.Br(),
     html.Br(),
     html.Div([
-        html.H1("""Player result progression"""),
         html.Br(),
         html.Br(),
         dcc.Graph(id="team_results", figure=plot_team_results(df_team_results))
-
-
     ])
 ])
 
+# starting a local app
 if __name__ == '__main__':
     app.run_server(debug=True)
