@@ -5,6 +5,25 @@ import datetime
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 
+"""
+I am not sure on ethical aspect of crawlers but the website I am crawling, the robots.txt and their legal text does not
+mention anything about automatic retrieval of the data. 
+
+
+I have included some of my actual round URLs below so the script can be tested in practise.
+You have to manually add the URL and date to variables at the end of this file. Using user inputs 
+were giving me an error and a headache in pytests,so had to opt for this solution in the project. 
+
+
+URL1 : http://www.upsiapp.com/games/913162
+Date1: 2020-06-06
+
+
+URL2 : http://www.upsiapp.com/games/1200712
+Date2: 2020-06-15
+
+
+"""
 
 
 def create_dataframe(url):
@@ -21,9 +40,8 @@ def create_dataframe(url):
         print("Could not read dataframe from url")
         raise
 
-    # fixing dataframe column names
-
     return df
+
 
 
 def create_rows(df):
@@ -44,6 +62,7 @@ def create_rows(df):
     return rows
 
 
+
 def date_validation(date):
     try:
         datetime.datetime.strptime(date, '%Y-%m-%d')
@@ -51,20 +70,23 @@ def date_validation(date):
         raise ValueError("Wrong date format! Insert (YYYY-MM-DD)")
 
 
-def input_information():
-    validate = URLValidator(regex="upsiapp+")  # URL validator to only accept from upsiapp
 
-    url = "http://www.upsiapp.com/games/543499"
+def validate_information(date, url):
+    '''
+    Input function for URL of the round and the date of the round played.
+
+    :return: stringa "url" and "date"
+    '''
+    validate = URLValidator(regex="upsiapp+")  # URL validator to only accept from site Upsiapp
+
     try:
         validate(url)
     except ValidationError:
         print("Not valid URL or not from Upsiapp")
         raise ValidationError
 
-    date = "2020-04-28"
     date_validation(date)
 
-    return url, date
 
 
 
@@ -77,7 +99,7 @@ def insert_data(rows, dbpath, date):
                 # calling method to add a round with parameters for date and playerID, returns roundID
                 _id, p_id = db.add_round(date, row)
             except:
-                print("add_round failed")
+                print("Adding a round failed.")
 
             holes = [i for i in range(1, len(df.columns) - 1)]
 
@@ -86,17 +108,22 @@ def insert_data(rows, dbpath, date):
                 for i in range(2, len(row)):
                     db.add_score(1, row[i], holes[i - 2], p_id, _id)  # calling method to add a score with parameters
             except:
-                print("add_score failed")
+                print("Adding score failed")
 
 
 
+print(f"\n{'*'*55}")
+print("Upsi crawler starting...")
+print(f"{'*'*55}\n")
 
-print(f"\n{'*'*75}")
-print("Here you can automatically add scores to database from Upsi round URL's")
-print(f"{'*'*75}\n")
+
+######### ENTER URL AND DATE HERE ##########
+
+url = "http://www.upsiapp.com/games/1200712"
+date = "2020-06-15"
 
 
-url, date = input_information()
-df = create_dataframe(url)
+validate_information(date, url) #validate url and date
+df = create_dataframe(url)  # read table from url, convert to pandas dataframe
 rows = create_rows(df)
-insert_data(rows, "discgolf.db", date)
+insert_data(rows, "discgolf.db", date)  # run inserts to database

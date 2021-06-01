@@ -8,11 +8,11 @@ def dummy_data():
     '''
     Dummy data is from actual historical disc golf round records, straight in the format that it is pulled in
     by "pd.read_html()" in module test_crawler. Since we are moving in gray area in scraping data from their website,
-    out of respect to Upsiapp I'd rather do tests with saved data instead of doing html requests.
+    out of respect to Upsiapp I'd rather do tests with saved queries of data instead of doing html requests.
     '''
 
-    return [(pd.read_csv("test_data/test_input.csv", index_col=0), '2020-05-27'),
-            (pd.read_csv("test_data/test_input2.csv", index_col=0), '2020-05-28')]
+    return [(pd.read_csv("testing/test_input.csv", index_col=0), '2020-05-27'),
+            (pd.read_csv("testing/test_input2.csv", index_col=0), '2020-05-28')]
 
 
 
@@ -67,7 +67,6 @@ def test_create_rows(dummy_data):
 
 
 # TESTING THE INTEGRITY OF DATA INSERT
-
 
 def test_add_data(dummy_data):
 

@@ -1,11 +1,9 @@
-import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from db_initiate import *
 
 import dash
 import dash_core_components as dcc
-import dash_daq as daq
 import dash_html_components as html
 from dash.dependencies import Input, Output
 from itertools import cycle
@@ -13,16 +11,21 @@ from itertools import cycle
 
 
 def data_preprocessing(df, df_stats):
+    '''
+
+    Helper function to change column types and returning the list of holeIDs
+
+    :param df:
+    :param df_stats:
+
+    :return: list of unique holeIDs
+    '''
     df["holeID"] = df["holeID"].astype(str)
     df_stats["holeID"] = df_stats["holeID"].astype(str)
     holes = list(df.holeID.unique())
 
     return holes
 
-
-
-def data_integrity_check():
-    pass
 
 
 def plot_avg_scores(df):
@@ -67,24 +70,25 @@ def plot_player_avgs(df):
     holes = list(df["holeID"].unique())
 
     fig_3.add_trace(go.Bar(x=holes,
-                         y=list(df[df["playerID"] == 1].hole_average.values),
-                         name='Hemmo',
-                         marker_color=next(palette)
+                             y=list(df[df["playerID"] == 1].hole_average.values),
+                             name='Hemmo',
+                            marker_color=next(palette),
                          ))
     fig_3.add_trace(go.Bar(x=holes,
-                         y=list(df[df["playerID"] == 2].hole_average.values),
-                         name='Sami',
-                         marker_color=next(palette)
+                             y=list(df[df["playerID"] == 2].hole_average.values),
+                             name='Sami',
+                             marker_color=next(palette)
                          ))
     fig_3.add_trace(go.Bar(x=holes,
-                         y=list(df[df["playerID"] == 3].hole_average.values),
-                         name='Daniel',
-                         marker_color=next(palette)
+                             y=list(df[df["playerID"] == 3].hole_average.values),
+                             name='Daniel',
+                             marker_color=next(palette)
                          ))
     fig_3.add_trace(go.Bar(x=holes,
-                         y=list(df[df["playerID"] == 4].hole_average.values),
-                         name='Joonas',
-                         marker_color=next(palette)
+                            y=list(df[df["playerID"] == 4].hole_average.values),
+                            name='Joonas',
+                            marker_color=next(palette),
+                            visible="legendonly"
                          ))
 
     fig_3.update_layout(
@@ -94,6 +98,7 @@ def plot_player_avgs(df):
             title='Average strokes',
             titlefont_size=16,
             tickfont_size=14,
+            range=[0,8]
         ),
         xaxis=dict(
             title='Hole number',
@@ -141,7 +146,7 @@ def plot_team_results(df2):
                              mode='lines+markers', name='Daniel', line_shape='spline'))
 
     fig4.add_trace(go.Scatter(x=df2[df2["playerID"] == 4]["Date"], y=list(df2[df2["playerID"] == 4]["result"]),
-                             mode='lines+markers', name='Joonas', line_shape='spline'))
+                             mode='lines+markers', name='Joonas', line_shape='spline', visible="legendonly"))
 
     fig4.update_layout(
         title='Scoring progression for each player',
@@ -178,11 +183,10 @@ with Database("discgolf.db") as db:
         df_team_avgs = db.query_to_df("SELECT * FROM team_averages")
         df_team_results = db.query_to_df("SELECT * FROM team_scores")
 
+
     except:
         print("Failed to load data to dataframe")
         raise
-
-
 
 
 holes = data_preprocessing(df, df_stats)
@@ -191,7 +195,7 @@ holes = data_preprocessing(df, df_stats)
 app = dash.Dash(__name__)
 
 
-# Dynamic changing of charts
+# Dynamic changing of putting-data
 @app.callback(
     Output("putt_chart", "children"),
     [Input("dropdown", "value")])
@@ -289,6 +293,8 @@ app.layout = html.Div([
         dcc.Graph(id="team_results", figure=plot_team_results(df_team_results))
     ])
 ])
+
+
 
 # starting a local app
 if __name__ == '__main__':

@@ -65,21 +65,41 @@ class Database():
         return temp_df
 
     def add_round(self, date, data):
+        '''
+        Make sure that the name in the input matches a name in database. If match, add round and continue.
+        Other names fail to get added, but the loop continues. This is because in some rounds there will be some players
+        that dont play with us often, but we still want to add our scores.
+
+        :return: _id: ID of last added round, p_id: playerID
+        '''
 
         # making sure the name in database matches to one in our database
         name = data[0]
         self.c.execute("""SELECT playerID FROM player WHERE playerName = ?;""", (name,))
         p_id = self.c.fetchall()[0][0]
 
+        # Inserting a round
         self.c.execute('''
                         INSERT INTO player_round ('playerID','date') VALUES(?,?);
                         ''', (p_id, date))
 
-        _id = self.c.lastrowid
+        _id = self.c.lastrowid  # getting the id of the last round added
+
         self.commit_changes()
         return _id, p_id
 
     def add_score(self, c_ID, strokes, h_ID, p_id, _id):
+        '''
+        Adds scores of the round to database
+
+            c_ID:      ID of the course (always 1 but included for future extension where we can add other courses)
+            strokes:   number of strokes taken in the specific hole
+            h_ID:      holeID (refers to holeID in database) to know which hole we are adding data to
+            p_id:      playerID (refers to players ID in database) to know whose score we are adding
+            _id:       roundID(refers to playerRoundID in database) to know to which round is this score being added to
+
+        :return:
+        '''
 
         self.c.execute('''
                             INSERT INTO player_scores ('courseID','strokes','holeID', 'playerID', 'playerRoundID') VALUES(?,?,?,?,?)
